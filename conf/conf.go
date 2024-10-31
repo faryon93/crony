@@ -93,18 +93,22 @@ func Load(path string) (*Conf, error) {
 				continue
 			}
 
-			env, err := util.LoadEnvFile(filepath.Join(jobFolderPath, fileInfo.Name()+".env"))
+			executablePath := filepath.Join(jobFolderPath, job.Name())
+			log.Infof("loading job '%s'", executablePath)
+
+			envFilePath := filepath.Join(jobFolderPath, fileInfo.Name()+".env")
+			env, err := util.LoadEnvFile(envFilePath)
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
 				log.Errorln("failed to load env file:", err.Error())
 			}
 
 			if env != nil {
-				log.Infoln("successfully loaded env file")
+				log.Infoln("successfully loaded env file", envFilePath)
 			}
 
 			conf.Jobs = append(conf.Jobs, &Job{
 				Spec: spec,
-				Path: filepath.Join(jobFolderPath, job.Name()),
+				Path: executablePath,
 				Env:  env,
 			})
 		}

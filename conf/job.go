@@ -25,7 +25,9 @@ package conf
 // ---------------------------------------------------------------------------------------
 
 type Job struct {
-	Spec *Spec
-	Path string
-	Env  []string
+	Spec *Spec    `yaml:"-"`
+	Path string   `yaml:"-"`
+	Env  []string `yaml:"-"`
+
+	DecorateLogs *bool `yaml:"decorate_logs"`
 }

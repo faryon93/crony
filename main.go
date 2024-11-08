@@ -79,13 +79,18 @@ func main() {
 					cmd.Env = append(os.Environ(), job.Env...)
 				}
 
-				stdOutWriter := logWriter(log, "stdout")
-				cmd.Stdout = stdOutWriter
-				defer stdOutWriter.Flush()
+				if job.DecorateLogs == nil || *job.DecorateLogs {
+					stdOutWriter := logWriter(log, "stdout")
+					defer stdOutWriter.Flush()
+					cmd.Stdout = stdOutWriter
 
-				stdErrWriter := logWriter(log, "stderr")
-				cmd.Stderr = stdErrWriter
-				defer stdErrWriter.Flush()
+					stdErrWriter := logWriter(log, "stderr")
+					defer stdErrWriter.Flush()
+					cmd.Stderr = stdErrWriter
+				} else {
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+				}
 
 				startTime := time.Now()
 				err := cmd.Start()

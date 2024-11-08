@@ -1,4 +1,4 @@
-package conf
+package util
 
 // crony
 // Copyright (C) 2024 Maximilian Pachl
@@ -22,43 +22,19 @@ package conf
 
 import (
 	"os"
-	"path/filepath"
 
-	"github.com/hashicorp/hcl/v2/hclsimple"
+	"gopkg.in/yaml.v3"
 )
-
-// ---------------------------------------------------------------------------------------
-//  constants
-// ---------------------------------------------------------------------------------------
-
-const (
-	specFileName = "crony.hcl"
-)
-
-// ---------------------------------------------------------------------------------------
-//  types
-// ---------------------------------------------------------------------------------------
-
-// Spec represents the configuration file (crony.hcl) for a group of jobs.
-type Spec struct {
-	Name string
-	Cron string `hcl:"cron"`
-}
 
 // ---------------------------------------------------------------------------------------
 //  public functions
 // ---------------------------------------------------------------------------------------
 
-// loadSpec loads the crony Spec from a given path.
-func loadSpec(path string) (*Spec, error) {
-	spec := Spec{
-		Name: filepath.Base(path),
-	}
-
-	buf, err := os.ReadFile(filepath.Join(path, specFileName))
+func UnmarshalYamlFile(filePath string, out interface{}) error {
+	buf, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &spec, hclsimple.Decode(filepath.Join(path, specFileName), buf, nil, &spec)
+	return yaml.Unmarshal(buf, out)
 }

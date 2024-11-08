@@ -1,13 +1,5 @@
 package conf
 
-import (
-	"errors"
-	"github.com/faryon93/crony/util"
-	"github.com/sirupsen/logrus"
-	"os"
-	"path/filepath"
-)
-
 // crony
 // Copyright (C) 2024 Maximilian Pachl
 
@@ -27,6 +19,15 @@ import (
 // ---------------------------------------------------------------------------------------
 //  imports
 // ---------------------------------------------------------------------------------------
+
+import (
+	"errors"
+	"os"
+	"path/filepath"
+
+	"github.com/faryon93/crony/util"
+	"github.com/sirupsen/logrus"
+)
 
 // ---------------------------------------------------------------------------------------
 //  types
@@ -62,7 +63,9 @@ func Load(path string) (*Conf, error) {
 			if errors.Is(err, os.ErrNotExist) {
 				logrus.Infof("skipping folder '%s': no spec file", folder.Name())
 			} else {
-				logrus.Errorln("failed to load job group spec file:", err.Error())
+				logrus.
+					WithField("path", jobFolderPath).
+					Errorln("failed to load job group spec file:", err.Error())
 			}
 			continue
 		}
@@ -96,6 +99,9 @@ func Load(path string) (*Conf, error) {
 			executablePath := filepath.Join(jobFolderPath, job.Name())
 			log.Infof("loading job '%s'", executablePath)
 
+			var jobConf Job
+
+			// load the environment file
 			envFilePath := filepath.Join(jobFolderPath, fileInfo.Name()+".env")
 			env, err := util.LoadEnvFile(envFilePath)
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -106,11 +112,21 @@ func Load(path string) (*Conf, error) {
 				log.Infoln("successfully loaded env file", envFilePath)
 			}
 
-			conf.Jobs = append(conf.Jobs, &Job{
-				Spec: spec,
-				Path: executablePath,
-				Env:  env,
-			})
+			// load the job configuration file
+			confFilePath := filepath.Join(jobFolderPath, fileInfo.Name()+".conf")
+			err = util.UnmarshalYamlFile(confFilePath, &jobConf)
+			if err == nil {
+				log.Infoln("successfully loaded job conf file", confFilePath)
+			} else {
+				if !errors.Is(err, os.ErrNotExist) {
+					log.Errorln("failed to unmarshal job conf file:", err.Error())
+				}
+			}
+
+			jobConf.Spec = spec
+			jobConf.Path = executablePath
+			jobConf.Env = env
+			conf.Jobs = append(conf.Jobs, &jobConf)
 		}
 	}
 
